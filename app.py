@@ -3,8 +3,8 @@ import pandas as pd
 import plotly.express as px
 
 # --- Streamlit başlığı ---
-st.set_page_config(page_title="Football Dashboard", layout="wide")
-st.title("⚽ Football Dashboard")
+st.set_page_config(page_title="Football Analytics", layout="wide")
+st.title("⚽ Football Analytics")
 
 # --- Veri Yükleme ---
 @st.cache_data
@@ -65,3 +65,4 @@ if selected_player:
 st.subheader(f"{selected_team} Takım Detayları")
 team_info = team_details[team_details['club_id'] == team_id]
 st.dataframe(team_info)
+
