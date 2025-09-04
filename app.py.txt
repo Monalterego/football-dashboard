@@ -1,12 +1,4 @@
 import streamlit as st
-import pandas as pd
 
-st.title("⚽ Football Analytics Dashboard")
-
-# Örnek veri
-df = pd.DataFrame({
-    "Player": ["Messi", "Ronaldo", "Neymar"],
-    "Goals": [30, 28, 25]
-})
-
-st.bar_chart(df.set_index("Player"))
+st.title("⚽ Football Dashboard")
+st.write("Merhaba! Bu ilk Streamlit uygulamam 🎉")
