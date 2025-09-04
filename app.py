@@ -2,11 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# --- Streamlit başlığı ---
+# --- Sayfa ayarı ---
 st.set_page_config(page_title="Football Dashboard", layout="wide")
 st.title("⚽ Football Dashboard")
 
-# --- Veri Yükleme ---
+# --- Veri yükleme ---
 @st.cache_data
 def load_data():
     player_profiles = pd.read_csv("player_profiles.csv")
@@ -20,38 +20,33 @@ player_profiles, player_performances, player_injuries, team_details, transfer_hi
 
 # --- Sidebar filtreleri ---
 st.sidebar.header("Filtreler")
-teams = team_details['team_name'].unique()
+teams = team_details['club_name'].unique()
 selected_team = st.sidebar.selectbox("Takım Seç", teams)
 
-players = player_profiles[player_profiles['team_name'] == selected_team]['player_name'].unique()
+players = player_profiles[player_profiles['current_club_name'] == selected_team]['player_name'].unique()
 selected_player = st.sidebar.selectbox("Oyuncu Seç", players)
 
 # --- Oyuncu bilgisi ---
 st.subheader(f"{selected_player} Bilgileri")
 player_info = player_profiles[player_profiles['player_name'] == selected_player]
-st.dataframe(player_info)
+st.dataframe(player_info[['player_name', 'position', 'current_club_name', 'height', 'date_of_birth']])
 
-# --- Oyuncu performans grafiği ---
+# --- Performans grafiği ---
 st.subheader(f"{selected_player} Performans Grafiği")
-player_stats = player_performances[player_performances['player_name'] == selected_player]
+player_stats = player_performances[player_performances['player_id'] == player_info['player_id'].values[0]]
 
 if not player_stats.empty:
-    fig = px.line(player_stats, x='match_date', y='goals', title="Gol Sayısı Zamanla")
+    fig = px.bar(player_stats, x='season_name', y='goals', color='competition_name', title="Gol Sayısı Sezon Bazlı")
     st.plotly_chart(fig, use_container_width=True)
 else:
-    st.write("Bu oyuncuya ait performans verisi bulunamadı.")
+    st.write("Performans verisi bulunamadı.")
 
 # --- Sakatlık durumu ---
 st.subheader(f"{selected_player} Sakatlık Durumu")
-injuries = player_injuries[player_injuries['player_name'] == selected_player]
-st.dataframe(injuries)
-
-# --- Takım detayları ---
-st.subheader(f"{selected_team} Takım Detayları")
-team_info = team_details[team_details['team_name'] == selected_team]
-st.dataframe(team_info)
+injuries = player_injuries[player_injuries['player_id'] == player_info['player_id'].values[0]]
+st.dataframe(injuries[['injury_reason','from_date','end_date','days_missed','games_missed']])
 
 # --- Transfer geçmişi ---
 st.subheader(f"{selected_player} Transfer Geçmişi")
-player_transfers = transfer_history[transfer_history['player_name'] == selected_player]
-st.dataframe(player_transfers)
+player_transfers = transfer_history[transfer_history['player_id'] == player_info['player_id'].values[0]]
+st.dataframe(player_transfers[['transfer_date','from_team_name','to_team_name','transfer_fee']])
