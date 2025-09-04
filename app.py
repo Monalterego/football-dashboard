@@ -21,79 +21,67 @@ player_profiles, player_performances, player_injuries, team_details, transfer_hi
 # --- Sidebar filtreleri ---
 st.sidebar.header("Filtreler")
 
-# Takımları alfabetik sırayla
+# Takımlar alfabetik
 teams = sorted(team_details['club_name'].unique())
 selected_team = st.sidebar.selectbox("Takım Seç", teams)
+
+# Sezon filtresi
+seasons = sorted(player_performances['season_name'].dropna().unique())
+selected_season = st.sidebar.selectbox("Sezon Seç", seasons)
+
+# Competition filtresi
+competitions = sorted(player_performances['competition_name'].dropna().unique())
+selected_competition = st.sidebar.selectbox("Competition Seç", competitions)
+
+# Country filtresi
+countries = sorted(player_profiles['country_of_birth'].dropna().unique())
+selected_country = st.sidebar.selectbox("Ülke Seç", countries)
+
+# Position filtresi
+positions = sorted(player_profiles['main_position'].dropna().unique())
+selected_position = st.sidebar.selectbox("Pozisyon Seç", positions)
 
 # Takım ID'sini bul
 team_row = team_details[team_details['club_name'] == selected_team]
 team_id = team_row['club_id'].values[0]
 
-# Oyuncuları seçilen takım ID'sine göre filtrele ve alfabetik sırala
-players_df = player_profiles[player_profiles['current_club_id'] == team_id]
+# Oyuncuları filtrele: takım + ülke + pozisyon
+players_df = player_profiles[
+    (player_profiles['current_club_id'] == team_id) &
+    (player_profiles['country_of_birth'] == selected_country) &
+    (player_profiles['main_position'] == selected_position)
+]
 players = sorted(players_df['player_name'].unique())
 
 if len(players) == 0:
-    st.sidebar.warning("Seçilen takımda oyuncu bulunamadı.")
+    st.sidebar.warning("Seçilen filtrelere uyan oyuncu bulunamadı.")
     selected_player = None
 else:
     selected_player = st.sidebar.selectbox("Oyuncu Seç", players)
 
-# --- Oyuncu bilgisi (Panini Kartı Stili, renklendirilmiş) ---
-if selected_player and not players_df.empty:
+# --- Oyuncu bilgileri ve panini kart ---
+if selected_player:
     player_info = player_profiles[player_profiles['player_name'] == selected_player]
     
     if not player_info.empty:
-        player_row = player_info.iloc[0]  # Tek satırlık DataFrame
-
-        # Panini kartı için HTML + CSS (renkli)
-        panini_card = f"""
-        <div style="
-            background: linear-gradient(135deg, #ffffff, #e0f7fa); 
-            border:3px solid #0288d1; 
-            border-radius:15px; 
-            padding:20px; 
-            width:320px;
-            text-align:center;
-            box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
-            margin-bottom:25px;
-        ">
-            <div style="
-                background-color:#0288d1; 
-                color:white; 
-                padding:8px; 
-                border-radius:10px;
-                font-weight:bold;
-                margin-bottom:10px;
-            ">
-                {player_row['current_club_name']}
-            </div>
-            <img src="{player_row['player_image_url']}" alt="{player_row['player_name']}" 
-                 style="width:100%; border-radius:10px; margin-bottom:10px; border:2px solid #0288d1;">
-            <h3 style="margin:5px 0; color:#d32f2f;">{player_row['player_name']}</h3>
-            <p style="margin:3px 0;"><b>Pozisyon:</b> {player_row['main_position']}</p>
-            <p style="margin:3px 0;"><b>Doğum Tarihi:</b> {player_row['date_of_birth']}</p>
-            <p style="margin:3px 0;"><b>Boy:</b> {player_row['height']} cm</p>
-            <p style="margin:3px 0;"><b>Ülke:</b> {player_row['country_of_birth']}</p>
-            <div style="
-                background-color:#0288d1; 
-                color:white; 
-                padding:5px; 
-                border-radius:5px;
-                margin-top:10px;
-                font-weight:bold;
-            ">
-                Sezon Başarıları
-            </div>
-            <p style="margin:2px 0;"><b>Gol:</b> {player_performances[player_performances['player_id'] == player_row['player_id']]['goals'].sum()}</p>
-            <p style="margin:2px 0;"><b>Asist:</b> {player_performances[player_performances['player_id'] == player_row['player_id']]['assists'].sum()}</p>
-        </div>
-        """
-        st.markdown(panini_card, unsafe_allow_html=True)
+        # Panini kart tasarımı
+        st.subheader(f"{selected_player} Bilgileri")
+        card_col1, card_col2 = st.columns([1, 3])
+        with card_col1:
+            st.image(player_info['player_image_url'].values[0], use_column_width=True)
+        with card_col2:
+            st.markdown(f"**Doğum Tarihi:** {player_info['date_of_birth'].values[0]}")
+            st.markdown(f"**Ülke:** {player_info['country_of_birth'].values[0]}")
+            st.markdown(f"**Pozisyon:** {player_info['main_position'].values[0]}")
+            st.markdown(f"**Mevcut Takım:** {player_info['current_club_name'].values[0]}")
 
         # --- Oyuncu performans grafiği ---
         st.subheader(f"{selected_player} Performans Grafiği")
-        player_stats = player_performances[player_performances['player_id'] == player_row['player_id']]
+        player_stats = player_performances[
+            (player_performances['player_id'] == player_info['player_id'].values[0]) &
+            (player_performances['season_name'] == selected_season) &
+            (player_performances['competition_name'] == selected_competition)
+        ]
         if not player_stats.empty:
             fig = px.line(player_stats, x='season_name', y='goals', title="Gol Sayısı Zamanla")
             st.plotly_chart(fig, use_container_width=True)
@@ -102,12 +90,12 @@ if selected_player and not players_df.empty:
 
         # --- Sakatlık durumu ---
         st.subheader(f"{selected_player} Sakatlık Durumu")
-        injuries = player_injuries[player_injuries['player_id'] == player_row['player_id']]
+        injuries = player_injuries[player_injuries['player_id'] == player_info['player_id'].values[0]]
         st.dataframe(injuries)
 
         # --- Transfer geçmişi ---
         st.subheader(f"{selected_player} Transfer Geçmişi")
-        player_transfers = transfer_history[transfer_history['player_id'] == player_row['player_id']]
+        player_transfers = transfer_history[transfer_history['player_id'] == player_info['player_id'].values[0]]
         st.dataframe(player_transfers)
     else:
         st.write("Seçilen oyuncuya ait profil bulunamadı.")
