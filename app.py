@@ -3,8 +3,8 @@ import pandas as pd
 import plotly.express as px
 
 # --- Streamlit başlığı ---
-st.set_page_config(page_title="Football Analytics", layout="wide")
-st.title("⚽ Football Analytics")
+st.set_page_config(page_title="Football Dashboard", layout="wide")
+st.title("⚽ Football Dashboard")
 
 # --- Veri Yükleme ---
 @st.cache_data
@@ -20,20 +20,21 @@ player_profiles, player_performances, player_injuries, team_details, transfer_hi
 
 # --- Sidebar filtreleri ---
 st.sidebar.header("Filtreler")
-
-# Takımlar alfabetik ve searchable
-teams = sorted(team_details['club_name'].unique())
+teams = team_details['club_name'].unique()
 selected_team = st.sidebar.selectbox("Takım Seç", teams)
 
-# Seçilen takıma ait oyuncular alfabetik
-players_df = player_profiles[player_profiles['current_club_name'] == selected_team]
-players = sorted(players_df['player_name'].dropna().unique())
+# Takım ID'sini bul
+team_id = team_details[team_details['club_name'] == selected_team]['club_id'].values[0]
 
-if players:
-    selected_player = st.sidebar.selectbox("Oyuncu Seç", players)
-else:
-    selected_player = None
+# Oyuncuları seçilen takım ID'sine göre filtrele
+players_df = player_profiles[player_profiles['current_club_id'] == team_id]
+players = players_df['player_name'].unique()
+
+if len(players) == 0:
     st.sidebar.warning("Seçilen takımda oyuncu bulunamadı.")
+    selected_player = None
+else:
+    selected_player = st.sidebar.selectbox("Oyuncu Seç", players)
 
 # --- Oyuncu bilgisi ---
 if selected_player:
@@ -62,5 +63,5 @@ if selected_player:
 
 # --- Takım detayları ---
 st.subheader(f"{selected_team} Takım Detayları")
-team_info = team_details[team_details['club_name'] == selected_team]
+team_info = team_details[team_details['club_id'] == team_id]
 st.dataframe(team_info)
