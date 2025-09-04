@@ -18,6 +18,26 @@ def load_data():
 
 player_profiles, player_performances, player_injuries, team_details, transfer_history = load_data()
 
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+
+# --- Streamlit başlığı ---
+st.set_page_config(page_title="Football Analytics", layout="wide")
+st.title("⚽ Football Analytics")
+
+# --- Veri Yükleme ---
+@st.cache_data
+def load_data():
+    player_profiles = pd.read_csv("player_profiles.csv")
+    player_performances = pd.read_csv("player_performances.csv")
+    player_injuries = pd.read_csv("player_injuries.csv")
+    team_details = pd.read_csv("team_details.csv")
+    transfer_history = pd.read_csv("transfer_history.csv")
+    return player_profiles, player_performances, player_injuries, team_details, transfer_history
+
+player_profiles, player_performances, player_injuries, team_details, transfer_history = load_data()
+
 # --- Sidebar filtreleri --- st.sidebar.header("Filtreler") teams = team_details['club_name'].unique() selected_team = st.sidebar.selectbox("Takım Seç", teams)
 
 # Takım ID'sini bul
@@ -62,6 +82,5 @@ if selected_player:
 st.subheader(f"{selected_team} Takım Detayları")
 team_info = team_details[team_details['club_id'] == team_id]
 st.dataframe(team_info)
-
 
 
