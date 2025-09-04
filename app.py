@@ -39,34 +39,54 @@ if len(players) == 0:
 else:
     selected_player = st.sidebar.selectbox("Oyuncu Seç", players)
 
-# --- Oyuncu bilgisi (Panini Kartı Stili) ---
+# --- Oyuncu bilgisi (Panini Kartı Stili, renklendirilmiş) ---
 if selected_player and not players_df.empty:
     player_info = player_profiles[player_profiles['player_name'] == selected_player]
     
     if not player_info.empty:
-        st.subheader(f"{selected_player} Bilgileri")
         player_row = player_info.iloc[0]  # Tek satırlık DataFrame
 
-        # Panini kartı için HTML + CSS
+        # Panini kartı için HTML + CSS (renkli)
         panini_card = f"""
         <div style="
-            background-color:#f8f9fa; 
-            border:2px solid #000; 
-            border-radius:10px; 
-            padding:15px; 
-            width:300px;
+            background: linear-gradient(135deg, #ffffff, #e0f7fa); 
+            border:3px solid #0288d1; 
+            border-radius:15px; 
+            padding:20px; 
+            width:320px;
             text-align:center;
-            box-shadow: 4px 4px 8px rgba(0,0,0,0.2);
-            margin-bottom:20px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+            margin-bottom:25px;
         ">
+            <div style="
+                background-color:#0288d1; 
+                color:white; 
+                padding:8px; 
+                border-radius:10px;
+                font-weight:bold;
+                margin-bottom:10px;
+            ">
+                {player_row['current_club_name']}
+            </div>
             <img src="{player_row['player_image_url']}" alt="{player_row['player_name']}" 
-                 style="width:100%; border-radius:10px; margin-bottom:10px;">
-            <h3 style="margin:5px 0;">{player_row['player_name']}</h3>
+                 style="width:100%; border-radius:10px; margin-bottom:10px; border:2px solid #0288d1;">
+            <h3 style="margin:5px 0; color:#d32f2f;">{player_row['player_name']}</h3>
             <p style="margin:3px 0;"><b>Pozisyon:</b> {player_row['main_position']}</p>
             <p style="margin:3px 0;"><b>Doğum Tarihi:</b> {player_row['date_of_birth']}</p>
-            <p style="margin:3px 0;"><b>Takım:</b> {player_row['current_club_name']}</p>
             <p style="margin:3px 0;"><b>Boy:</b> {player_row['height']} cm</p>
             <p style="margin:3px 0;"><b>Ülke:</b> {player_row['country_of_birth']}</p>
+            <div style="
+                background-color:#0288d1; 
+                color:white; 
+                padding:5px; 
+                border-radius:5px;
+                margin-top:10px;
+                font-weight:bold;
+            ">
+                Sezon Başarıları
+            </div>
+            <p style="margin:2px 0;"><b>Gol:</b> {player_performances[player_performances['player_id'] == player_row['player_id']]['goals'].sum()}</p>
+            <p style="margin:2px 0;"><b>Asist:</b> {player_performances[player_performances['player_id'] == player_row['player_id']]['assists'].sum()}</p>
         </div>
         """
         st.markdown(panini_card, unsafe_allow_html=True)
