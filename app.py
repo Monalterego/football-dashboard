@@ -20,7 +20,9 @@ player_profiles, player_performances, player_injuries, team_details, transfer_hi
 
 # --- Sidebar filtreleri ---
 st.sidebar.header("Filtreler")
-teams = team_details['club_name'].unique()
+
+# Takımları alfabetik sıraya göre al
+teams = sorted(team_details['club_name'].unique())
 selected_team = st.sidebar.selectbox("Takım Seç", teams)
 
 # Takım ID'sini bul
@@ -65,4 +67,5 @@ if selected_player:
 st.subheader(f"{selected_team} Takım Detayları")
 team_info = team_details[team_details['club_id'] == team_id]
 st.dataframe(team_info)
+
 
