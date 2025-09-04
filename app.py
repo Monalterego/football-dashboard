@@ -20,71 +20,48 @@ player_profiles, player_performances, player_injuries, team_details, transfer_hi
 
 # --- Sidebar filtreleri ---
 st.sidebar.header("Filtreler")
-
-# Takım listesi
-teams = team_details['club_name'].dropna().unique()
+teams = team_details['club_name'].unique()
 selected_team = st.sidebar.selectbox("Takım Seç", teams)
 
-# Oyuncu listesi, seçilen takıma göre filtreleme
-players_df = player_profiles[player_profiles['current_club_name'] == selected_team]
-players_df = players_df[players_df['player_name'].notna()]
-players_df['player_display_name'] = players_df['player_name'].str.split(" \(").str[0]
+# Takım ID'sini bul
+team_id = team_details[team_details['club_name'] == selected_team]['club_id'].values[0]
 
-players = players_df['player_display_name'].unique()
+# Oyuncuları seçilen takım ID'sine göre filtrele
+players_df = player_profiles[player_profiles['current_club_id'] == team_id]
+players = players_df['player_name'].unique()
 
-if len(players) > 0:
-    selected_player = st.sidebar.selectbox("Oyuncu Seç", players)
-else:
+if len(players) == 0:
     st.sidebar.warning("Seçilen takımda oyuncu bulunamadı.")
     selected_player = None
+else:
+    selected_player = st.sidebar.selectbox("Oyuncu Seç", players)
 
 # --- Oyuncu bilgisi ---
 if selected_player:
     st.subheader(f"{selected_player} Bilgileri")
-    player_info = players_df[players_df['player_display_name'] == selected_player]
+    player_info = player_profiles[player_profiles['player_name'] == selected_player]
+    st.dataframe(player_info)
 
-    if not player_info.empty:
-        st.dataframe(player_info)
-        player_id = player_info['player_id'].values[0]
-    else:
-        st.write("Seçilen oyuncuya ait profil bulunamadı.")
-        player_id = None
-else:
-    player_id = None
-
-# --- Oyuncu performans grafiği ---
-if player_id:
+    # --- Oyuncu performans grafiği ---
     st.subheader(f"{selected_player} Performans Grafiği")
-    player_stats = player_performances[player_performances['player_id'] == player_id]
-
+    player_stats = player_performances[player_performances['player_id'] == player_info['player_id'].values[0]]
     if not player_stats.empty:
-        fig = px.line(player_stats, x='match_date', y='goals', title="Gol Sayısı Zamanla")
+        fig = px.line(player_stats, x='season_name', y='goals', title="Gol Sayısı Zamanla")
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.write("Bu oyuncuya ait performans verisi bulunamadı.")
 
-# --- Sakatlık durumu ---
-if player_id:
+    # --- Sakatlık durumu ---
     st.subheader(f"{selected_player} Sakatlık Durumu")
-    injuries = player_injuries[player_injuries['player_id'] == player_id]
-    if not injuries.empty:
-        st.dataframe(injuries)
-    else:
-        st.write("Bu oyuncuya ait sakatlık verisi bulunamadı.")
+    injuries = player_injuries[player_injuries['player_id'] == player_info['player_id'].values[0]]
+    st.dataframe(injuries)
+
+    # --- Transfer geçmişi ---
+    st.subheader(f"{selected_player} Transfer Geçmişi")
+    player_transfers = transfer_history[transfer_history['player_id'] == player_info['player_id'].values[0]]
+    st.dataframe(player_transfers)
 
 # --- Takım detayları ---
 st.subheader(f"{selected_team} Takım Detayları")
-team_info = team_details[team_details['club_name'] == selected_team]
-if not team_info.empty:
-    st.dataframe(team_info)
-else:
-    st.write("Bu takıma ait detay verisi bulunamadı.")
-
-# --- Transfer geçmişi ---
-if player_id:
-    st.subheader(f"{selected_player} Transfer Geçmişi")
-    player_transfers = transfer_history[transfer_history['player_id'] == player_id]
-    if not player_transfers.empty:
-        st.dataframe(player_transfers)
-    else:
-        st.write("Bu oyuncuya ait transfer geçmişi bulunamadı.")
+team_info = team_details[team_details['club_id'] == team_id]
+st.dataframe(team_info)
