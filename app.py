@@ -18,12 +18,7 @@ def load_data():
 
 player_profiles, player_performances, player_injuries, team_details, transfer_history = load_data()
 
-# --- Sidebar filtreleri ---
-st.sidebar.header("Filtreler")
-
-# Takımları alfabetik sıraya göre al
-teams = sorted(team_details['club_name'].unique())
-selected_team = st.sidebar.selectbox("Takım Seç", teams)
+# --- Sidebar filtreleri --- st.sidebar.header("Filtreler") teams = team_details['club_name'].unique() selected_team = st.sidebar.selectbox("Takım Seç", teams)
 
 # Takım ID'sini bul
 team_id = team_details[team_details['club_name'] == selected_team]['club_id'].values[0]
@@ -67,5 +62,6 @@ if selected_player:
 st.subheader(f"{selected_team} Takım Detayları")
 team_info = team_details[team_details['club_id'] == team_id]
 st.dataframe(team_info)
+
 
 
